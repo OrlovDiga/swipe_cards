@@ -180,15 +180,6 @@ class _SwipeCardsState extends State<SwipeCards> {
     return Stack(
       fit: widget.fillSpace == true ? StackFit.expand : StackFit.loose,
       children: <Widget>[
-        if (widget.matchEngine.nextItem != null)
-          DraggableCard(
-            isDraggable: false,
-            card: _buildBackCard(),
-            upSwipeAllowed: widget.upSwipeAllowed,
-            leftSwipeAllowed: widget.leftSwipeAllowed,
-            rightSwipeAllowed: widget.rightSwipeAllowed,
-            isBackCard: true,
-          ),
         if (widget.matchEngine.currentItem != null)
           DraggableCard(
             card: _buildFrontCard(),
@@ -221,6 +212,10 @@ class MatchEngine extends ChangeNotifier {
     _nextItemIndex = 1;
   }
 
+  int? getCurrentIndex() {
+    return _currentItemIndex;
+  }
+
   SwipeItem? get currentItem => _currentItemIndex! < _swipeItems!.length
       ? _swipeItems![_currentItemIndex!]
       : null;
@@ -230,6 +225,7 @@ class MatchEngine extends ChangeNotifier {
       : null;
 
   void cycleMatch() {
+    print("currentItem.decision: ${currentItem!.decision}");
     if (currentItem!.decision != Decision.undecided) {
       currentItem!.resetMatch();
       _currentItemIndex = _nextItemIndex;
@@ -239,11 +235,10 @@ class MatchEngine extends ChangeNotifier {
   }
 
   void rewindMatch() {
-    if (_currentItemIndex != 0) {
-      currentItem!.resetMatch();
-      _nextItemIndex = _currentItemIndex;
+    if (_currentItemIndex != null && _currentItemIndex! > 0) {
+      _swipeItems!.removeAt(_currentItemIndex!);
       _currentItemIndex = _currentItemIndex! - 1;
-      currentItem!.resetMatch();
+      _nextItemIndex = _currentItemIndex! + 1;
       notifyListeners();
     }
   }
@@ -252,7 +247,7 @@ class MatchEngine extends ChangeNotifier {
 class SwipeItem extends ChangeNotifier {
   final dynamic content;
   final Function? likeAction;
-  final Function? superlikeAction;
+  Function? superlikeAction;
   final Function? nopeAction;
   final Future Function(SlideRegion? slideRegion)? onSlideUpdate;
   Decision decision = Decision.undecided;
